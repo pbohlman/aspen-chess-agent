@@ -24,18 +24,7 @@ const chessAgent: Agent = {
           } else {
             // otherwise, try and make a move
             const moveStr = event.data.moveStr;
-            const gameId = event.data.gameId;
-
-            if (!game.move(moveStr, { sloppy: true })) {
-              // inform of an invalid move
-              console.log(`${moveStr} is invalid`);
-            } else {
-              console.log(`moved ${moveStr} in game ${gameId}`);
-              // successful moves show the board
-              // console.log(game.ascii());
-            }
-            // in every case, indicate the current color to move
-            console.log(`${game.turn()} to move`);
+            game.move(moveStr)
           }
         }
         return game;
@@ -54,6 +43,19 @@ const chessAgent: Agent = {
       },
       serialize: (gameSet: Set<string>) => Array.from(gameSet.values()),
     },
+    playerMap: {
+      initialize: (playerMap?: Record<string, {white: string, black:string}>) => playerMap ?? {'test' : {white: 'human', black: 'human'}},
+      reducer: (playerMap: Record<string, {white: string, black:string}>, event) => {
+        if (event.data.type === 'new_game') {
+          const gameId = event.data.gameId
+          const white = event.data.white
+          const black = event.data.black
+          playerMap[gameId] = {white: white, black: black}
+        }
+        return playerMap;
+      },
+      serialize: (playerMap: Record<string, {white: string, black:string}>) => playerMap,
+    }
   },
   views: {
     ascii: async ({ gameId }, aspen) => {
@@ -89,45 +91,72 @@ const chessAgent: Agent = {
       });
       return games;
     },
+
+    players: async ({gameId}, aspen) => {
+      const playerMap = await aspen.getAggregation('playerMap', {
+        range: 'continuous',
+      });
+      return playerMap[gameId]
+    }
   },
   actions: {
     move: async ({ moveStr, gameId }, aspen) => {
-      await aspen.pushEvent(
-        'chess_move',
-        {
-          moveStr,
-          gameId,
-        },
-        {
-          gameId,
-        },
-      );
-      return `Tried ${moveStr} in game ${gameId}`;
+      const fen = await aspen.getView('fen', {gameId})
+      const state = new Chess(fen ?? undefined)
+      if (state.move(moveStr)){
+        await aspen.pushEvent(
+          'chess_move',
+          {
+            moveStr,
+            gameId,
+          },
+          {
+            gameId,
+          },
+        );
+        return `Tried ${moveStr} in game ${gameId}`;
+      }
     },
-    newGame: async ({ gameId }, aspen) => {
+      
+    newGame: async ({ gameId, white, black }, aspen) => {
       await aspen.pushEvent('new_game', {
         gameId,
+        white,
+        black
       });
-      return `Created new game ${gameId}`;
+      return `Created new game ${gameId} with white player ${white} and black player ${black}`;
     },
-    // randomMove: async (_param, aspen) => {
-    //   const moves = await aspen.getView('moves');
-    //   const move = moves.[Math.floor(Math.random()*moves.length)];
-    //   await aspen.pushEvent('chess_move', {
-    //     moveStr: move,
-    //   });
-    //   return `Tried ${move}`;
-    // }
   },
   automations: {
     randomAI: {
       runOn: {
         kind: 'log-event',
-        source: "",
+        source: "pbohlman/chess",
         tags: {},
       },
-      action: (evt, aspen) => {
-        
+      action: async (evt, aspen) => {
+        if (evt.type === 'chess_move' || evt.type === 'new_game') {
+          const gameId = evt.data.gameId;
+          const fen = await aspen.getView('fen', {gameId})
+          const players = await aspen.getView('players', {gameId});
+          const state = new Chess(fen ?? undefined)
+          const turn = state.turn()
+          if (players.white === 'ai' && turn === 'w' ||
+              players.black === 'ai' && turn === 'b') {
+            const moves = state.moves()
+            const move = moves[Math.floor(Math.random()*moves.length)]
+            await aspen.pushEvent(
+              'chess_move',
+              {
+                move,
+                gameId,
+              },
+              {
+                gameId,
+              },
+            );
+          }
+        }
       }
     }
   }
