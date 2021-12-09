@@ -66,7 +66,13 @@ const chessAgent: Agent = {
         })
       );
       const state = new Chess(fen ?? undefined);
-      return state.ascii();
+      return {
+        ascii: state.ascii(),
+        turn: state.turn(),
+        inCheck: state.in_check(),
+        inCheckmate: state.in_checkmate(),
+        gameOver: state.game_over()
+      }
     },
 
     fen: async ({ gameId }, aspen) => {
