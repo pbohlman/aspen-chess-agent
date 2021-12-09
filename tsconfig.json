@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": false,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["./node_modules/@types", "./node_modules/@aspen.cloud"],
+    "declaration": true,
+    "outDir": "deploy/"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

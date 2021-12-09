@@ -1,0 +1,7 @@
+{
+  "title": "Chess",
+  "name": "chess",
+  "description": "super fun chess",
+  "type": "agent",
+  "pathToDeploy": "./deploy"
+}

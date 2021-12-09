@@ -1,0 +1,20 @@
+{
+  "name": "phil-chess-agent",
+  "version": "1.0.0",
+  "main": "./deploy/chess.bundle.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild src/agent.ts --bundle --format=iife --global-name=agent --minify --outfile=./deploy/chess.bundle.js"
+  },
+  "devDependencies": {
+    "@aspen.cloud/agent-typings": "^0.1.9",
+    "esbuild": "^0.13.12"
+  },
+  "dependencies": {
+    "@types/chess.js": "0.11.2",
+    "chess.js": "0.12.0",
+    "nanoid": "^3.1.29"
+  },
+  "keywords": [],
+  "description": ""
+}
