@@ -142,7 +142,7 @@ const chessAgent: Agent = {
       },
       action: async (evt, aspen) => {
         if (evt.type === 'chess_move' || evt.type === 'new_game') {
-          const gameId = evt.data.gameId;
+          const gameId = evt.gameId;
           const fen = await aspen.getView('fen', {gameId})
           const players = await aspen.getView('players', {gameId});
           const state = new Chess(fen ?? undefined)
